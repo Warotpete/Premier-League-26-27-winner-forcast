@@ -1,0 +1,18 @@
+{
+  "season": "2627",
+  "cutoff": "2026-09-20",
+  "last_result": "2026-09-20",
+  "simulations": 10000,
+  "seed": 42,
+  "remaining_matches": 330,
+  "model": "regularized time-weighted independent Poisson",
+  "caveat": "Missing results treated as unplayed; fixed strengths; simplified final tiebreak.",
+  "backtest": {
+    "season": "2526",
+    "matches": 380,
+    "log_loss": 1.0282184379518022,
+    "baseline_log_loss": 1.0849381577283288,
+    "brier": 0.6172009322855921,
+    "correct": 0.47368421052631576
+  }
+}
