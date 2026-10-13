@@ -1,0 +1,197 @@
+{
+  "season": "2627",
+  "source": "https://fantasy.premierleague.com/api/fixtures/",
+  "fetched_at": "2026-10-13T07:36:16.056024+00:00",
+  "events": [
+    {
+      "gameweek": 1,
+      "deadline": "2026-08-21T17:30:00Z",
+      "finished": true
+    },
+    {
+      "gameweek": 2,
+      "deadline": "2026-08-28T17:30:00Z",
+      "finished": true
+    },
+    {
+      "gameweek": 3,
+      "deadline": "2026-09-04T17:30:00Z",
+      "finished": true
+    },
+    {
+      "gameweek": 4,
+      "deadline": "2026-09-12T12:30:00Z",
+      "finished": true
+    },
+    {
+      "gameweek": 5,
+      "deadline": "2026-09-18T17:30:00Z",
+      "finished": true
+    },
+    {
+      "gameweek": 6,
+      "deadline": "2026-10-10T10:00:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 7,
+      "deadline": "2026-10-17T10:00:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 8,
+      "deadline": "2026-10-23T17:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 9,
+      "deadline": "2026-10-31T11:00:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 10,
+      "deadline": "2026-11-06T18:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 11,
+      "deadline": "2026-11-21T11:00:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 12,
+      "deadline": "2026-11-27T18:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 13,
+      "deadline": "2026-12-02T18:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 14,
+      "deadline": "2026-12-05T13:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 15,
+      "deadline": "2026-12-12T13:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 16,
+      "deadline": "2026-12-19T13:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 17,
+      "deadline": "2026-12-26T11:00:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 18,
+      "deadline": "2026-12-29T18:00:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 19,
+      "deadline": "2027-01-01T18:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 20,
+      "deadline": "2027-01-05T18:00:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 21,
+      "deadline": "2027-01-16T13:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 22,
+      "deadline": "2027-01-23T13:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 23,
+      "deadline": "2027-01-30T13:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 24,
+      "deadline": "2027-02-06T13:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 25,
+      "deadline": "2027-02-10T18:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 26,
+      "deadline": "2027-02-20T13:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 27,
+      "deadline": "2027-02-27T13:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 28,
+      "deadline": "2027-03-03T18:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 29,
+      "deadline": "2027-03-13T13:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 30,
+      "deadline": "2027-03-20T13:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 31,
+      "deadline": "2027-04-10T12:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 32,
+      "deadline": "2027-04-17T12:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 33,
+      "deadline": "2027-04-24T12:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 34,
+      "deadline": "2027-05-01T12:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 35,
+      "deadline": "2027-05-08T12:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 36,
+      "deadline": "2027-05-15T12:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 37,
+      "deadline": "2027-05-23T12:30:00Z",
+      "finished": false
+    },
+    {
+      "gameweek": 38,
+      "deadline": "2027-05-30T13:30:00Z",
+      "finished": false
+    }
+  ]
+}

@@ -3,7 +3,9 @@ from zoneinfo import ZoneInfo
 from pathlib import Path
 import pandas as pd
 import streamlit as st
-from engine import load_matches, GoalModel, simulate, backtest
+import altair as alt
+import json
+from engine import load_matches, load_fixtures, gameweek_points, GoalModel, simulate, backtest
 
 st.set_page_config(page_title='Football Forecast Lab', page_icon='⚽', layout='wide')
 st.title('⚽ Football Forecast Lab')
@@ -13,7 +15,7 @@ st.caption('Premier League forecasts • transparent models • historical valid
 def read_data(signature):
     return load_matches()
 
-files = list(Path('data/raw').glob('*.csv'))
+files = list(Path('data/raw').glob('*.csv')) + list(Path('data/fixtures').glob('*'))
 matches = read_data(tuple((str(p),p.stat().st_mtime) for p in files))
 if matches.empty:
     st.info('Download historical results first: python fetch_data.py')
@@ -21,7 +23,11 @@ if matches.empty:
 today = datetime.now(ZoneInfo('America/Los_Angeles')).date()
 matches = matches[matches.date <= pd.Timestamp(today)]
 seasons = sorted(matches.season.unique(), reverse=True)
-season = st.sidebar.selectbox('Season', seasons, format_func=lambda s:f'20{s[:2]}–20{s[2:]}')
+season = '2627'
+st.sidebar.markdown('**Premier League 2026–27**')
+if season not in seasons:
+    st.info('Download 2026–27 results and fixtures to view the current season.')
+    st.stop()
 start_year = 2000+int(season[:2])
 cutoff = st.sidebar.date_input('Include results through', value=min(today,date(start_year+1,6,30)),
     min_value=date(start_year,7,1),max_value=date(start_year+1,6,30))
@@ -29,12 +35,10 @@ simulations = st.sidebar.select_slider('Season simulations',options=[1000,5000,1
 season_matches = matches[matches.season==season]
 teams = sorted(set(season_matches.home)|set(season_matches.away))
 played = season_matches[season_matches.date<=pd.Timestamp(cutoff)]
-if season != '2627':
-    st.warning('Historical season selected. This is a retrospective forecast, not a current 2026–27 prediction. Current-season data must be available to forecast that season.')
 st.caption(f'Data available through {matches.date.max():%d %b %Y}. Forecast uses results through {cutoff:%d %b %Y}.')
 if not played.empty and (pd.Timestamp(cutoff)-played.date.max()).days > 7 and len(played)<380:
     st.warning(f'Season results stop at {played.date.max():%d %b %Y}. Later played matches may be missing and will be treated as unplayed. Refresh the source before using this as a current forecast.')
-forecast_tab, match_tab, method_tab, validation_tab = st.tabs(['Season forecast','Match explorer','Model & assumptions','Backtesting'])
+forecast_tab, weekly_tab, match_tab, method_tab, validation_tab = st.tabs(['Season forecast','Points by gameweek','Match explorer','Model & assumptions','Backtesting'])
 
 @st.cache_data
 def forecast(signature,season,cutoff,simulations):
@@ -67,6 +71,49 @@ with forecast_tab:
     except (ValueError,RuntimeError) as exc:
         st.error(str(exc))
 
+@st.cache_data
+def weekly_forecast(signature,cutoff,simulations):
+    data=load_matches()
+    model=GoalModel().fit(data,pd.Timestamp(cutoff)+pd.Timedelta(days=1))
+    fixtures=load_fixtures()
+    # The results CSV can be newer than FPL's completed-score feed.
+    results={(r.home,r.away):r for r in data[data.season=='2627'].itertuples()}
+    for i,f in fixtures.iterrows():
+        result=results.get((f.home,f.away))
+        if result is not None and not f.finished:
+            fixtures.loc[i,['hg','ag','finished']]=[result.hg,result.ag,True]
+            fixtures.loc[i,'kickoff']=pd.Timestamp(result.date,tz='UTC')
+    return gameweek_points(model,fixtures,cutoff,simulations)
+
+with weekly_tab:
+    st.subheader('2026–27 cumulative points by gameweek')
+    if not Path('data/fixtures/2627.csv').exists():
+        st.info('Run python fetch_fixtures.py to download the official gameweek schedule.')
+    else:
+        try:
+            weekly=weekly_forecast(tuple((str(p),p.stat().st_mtime) for p in files),cutoff,simulations)
+            clubs=st.multiselect('Compare clubs',teams,default=[t for t in ['Arsenal','Man City','Liverpool'] if t in teams])
+            chosen=weekly[weekly.team.isin(clubs)]
+            base=alt.Chart(chosen).encode(x=alt.X('gameweek:Q',title='Gameweek',scale=alt.Scale(domain=[0,38])),color=alt.Color('team:N',title='Club'))
+            band=base.mark_area(opacity=.12).encode(y=alt.Y('points_low:Q',title='Cumulative points'),y2='points_high:Q')
+            projected=base.mark_line().encode(y='expected_points:Q',tooltip=['team','gameweek',alt.Tooltip('expected_points:Q',format='.1f'), 'points_low','points_high'])
+            actual=base.transform_filter('isValid(datum.actual_points)').mark_line(strokeDash=[5,3],point=True).encode(y='actual_points:Q',tooltip=['team','gameweek','actual_points'])
+            st.altair_chart(band+projected+actual,use_container_width=True)
+            st.caption('Solid lines: expected cumulative points. Dashed lines: actual totals through fully observed team gameweeks. Shading: 10th–90th percentiles of simulations. This is one forecast at the selected cutoff, not forecasts made separately in past weeks.')
+            week=st.slider('Inspect gameweek',0,38,38)
+            table=weekly[weekly.gameweek==week].sort_values('expected_points',ascending=False)
+            st.dataframe(table.drop(columns='gameweek'),hide_index=True,column_config={
+                'expected_points':st.column_config.NumberColumn('Expected points',format='%.1f'),
+                'actual_points':st.column_config.NumberColumn('Actual points',format='%.0f'),
+                'points_low':st.column_config.NumberColumn('10th percentile',format='%.0f'),
+                'points_high':st.column_config.NumberColumn('90th percentile',format='%.0f')},use_container_width=True)
+            st.download_button('Download all gameweek points',weekly.to_csv(index=False),'2627_gameweek_points.csv','text/csv')
+            st.caption('Fixtures use official FPL gameweek assignments. Rescheduled matches follow their assigned gameweek, so these totals are not calendar-date standings. Blank and double gameweeks carry zero or multiple fixtures. Unassigned fixtures require a refreshed schedule.')
+            metadata=json.loads(Path('data/fixtures/2627.json').read_text(encoding='utf-8'))
+            st.markdown(f"[Official FPL fixture source]({metadata['source']}) · Last fetched: {metadata['fetched_at']}")
+        except (ValueError,RuntimeError) as exc:
+            st.error(str(exc))
+
 with match_tab:
     left,right=st.columns(2)
     home=left.selectbox('Home club',teams)
@@ -88,16 +135,17 @@ with method_tab:
     st.latex(r'\lambda_{home}=\exp(\mu+h+a_{home}+d_{away})')
     st.latex(r'\lambda_{away}=\exp(\mu+a_{away}+d_{home})')
     st.write('Independent Poisson draws produce scorelines. Completed results stay fixed; every remaining home/away pairing is simulated. Finishing positions are ranked by points, goal difference, then goals scored.')
-    st.warning('Baseline limitations: no injuries, lineups, transfer values, or event-based xG; team strength stays fixed during each simulation. Exact remaining fixture dates are not ingested yet. Ties after goals scored are resolved randomly rather than implementing head-to-head/play-off rules. Promoted clubs with no training history use average strength.')
+    st.warning('Baseline limitations: no injuries, lineups, transfer values, or event-based xG; team strength stays fixed during each simulation. Ties after goals scored are resolved randomly rather than implementing head-to-head/play-off rules. Promoted clubs with no training history use average strength.')
+    st.write('Gameweek points use the official FPL schedule and completed scores. Expected points per unplayed fixture are 3 × win probability + draw probability; cumulative intervals come from simulated scorelines. A fixed forecast cutoff is used throughout the curve.')
     st.write('Historical season membership is inferred from that season’s observed clubs. Historical forecasts therefore assume the participant list was known. Future results never enter model fitting or completed standings.')
     st.info('UCL is the next milestone. Its forecasts are not implemented or represented by placeholder probabilities.')
     st.markdown('[Results source: Football-Data.co.uk](https://www.football-data.co.uk/)')
 
 with validation_tab:
     st.write('Out-of-time evaluation: refit at each month’s start using only earlier results. Compare match log loss against historical home/draw/away frequencies. Lower log loss and Brier score are better.')
-    valid=[s for s in seasons if len(matches[matches.date < matches[matches.season==s].date.min()])>=100]
+    valid=[s for s in seasons if s != '2627' and len(matches[matches.date < matches[matches.season==s].date.min()])>=100]
     if valid:
-        target=st.selectbox('Backtest season',valid)
+        target=st.selectbox('Backtest season',valid,format_func=lambda s:f'{s[:2]}/{s[2:]}')
         if st.button('Run historical backtest'):
             with st.spinner('Running monthly historical fits…'):
                 try:

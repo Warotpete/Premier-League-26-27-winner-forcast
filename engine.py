@@ -19,8 +19,82 @@ def load_matches(root='data/raw'):
     if not frames:
         return pd.DataFrame(columns=['date','home','away','hg','ag','season'])
     result = pd.concat(frames).sort_values('date').drop_duplicates(['date','home','away'])
+    official_path = Path('data/fixtures/2627.csv')
+    if root == 'data/raw' and official_path.exists():
+        official = load_fixtures(official_path)
+        done = official[official.finished & official.hg.notna() & official.ag.notna()].copy()
+        done['date'] = done.kickoff.dt.tz_localize(None).dt.normalize()
+        done['season'] = '2627'
+        done = done[['date','home','away','hg','ag','season']].dropna()
+        result = pd.concat([result,done]).drop_duplicates(['season','home','away'],keep='last').sort_values('date')
     result[['hg','ag']] = result[['hg','ag']].astype(int)
     return result.reset_index(drop=True)
+
+def load_fixtures(path='data/fixtures/2627.csv'):
+    fixtures = pd.read_csv(path)
+    fixtures['kickoff'] = pd.to_datetime(fixtures.kickoff,utc=True,errors='coerce')
+    fixtures['gameweek'] = pd.to_numeric(fixtures.gameweek,errors='coerce').astype('Int64')
+    fixtures['finished'] = fixtures.finished.astype(str).str.lower().eq('true')
+    if len(fixtures)!=380 or fixtures.duplicated(['home','away']).any():
+        raise ValueError('Expected a unique 380-match season schedule.')
+    teams=set(fixtures.home)|set(fixtures.away)
+    if len(teams)!=20 or (fixtures.home==fixtures.away).any():
+        raise ValueError('Invalid season teams.')
+    assigned=fixtures.gameweek.dropna()
+    if not assigned.between(1,38).all():
+        raise ValueError('Gameweeks must be between 1 and 38.')
+    return fixtures
+
+def gameweek_points(model, fixtures, cutoff, simulations=10000, seed=42):
+    """Cumulative points by assigned FPL gameweek, conditional on known results.
+
+    Unassigned postponed fixtures cannot be placed on a gameweek curve.
+    Actual totals are shown only while every contributing team fixture is known.
+    """
+    if fixtures.gameweek.isna().any():
+        raise ValueError('Some fixtures have no assigned gameweek. Refresh the schedule after reassignment; a complete gameweek forecast cannot yet be produced.')
+    if simulations<1:
+        raise ValueError('At least one simulation is required.')
+    teams=sorted(set(fixtures.home)|set(fixtures.away))
+    index={t:i for i,t in enumerate(teams)}
+    n=len(teams)
+    cutoff_end=pd.Timestamp(cutoff,tz='UTC')+pd.Timedelta(days=1)
+    known=fixtures.finished & fixtures.hg.notna() & fixtures.ag.notna() & (fixtures.kickoff<cutoff_end)
+    fixtures=fixtures.copy()
+    fixtures['known']=known
+    samples=np.zeros((simulations,n),dtype=int)
+    expected=np.zeros(n)
+    actual=np.zeros(n,dtype=int)
+    actual_complete=np.ones(n,dtype=bool)
+    rng=np.random.default_rng(seed)
+    rows=[]
+    for week in range(0,39):
+        for f in fixtures[fixtures.gameweek==week].sort_values('id').itertuples():
+            i,j=index[f.home],index[f.away]
+            if f.known:
+                hp=3 if f.hg>f.ag else 1 if f.hg==f.ag else 0
+                ap=3 if f.ag>f.hg else 1 if f.hg==f.ag else 0
+                samples[:,i]+=hp
+                samples[:,j]+=ap
+                expected[i]+=hp
+                expected[j]+=ap
+                actual[i]+=hp
+                actual[j]+=ap
+            else:
+                lh,la=model.rates(f.home,f.away)
+                hg,ag=rng.poisson(lh,simulations),rng.poisson(la,simulations)
+                samples[:,i]+=np.where(hg>ag,3,np.where(hg==ag,1,0))
+                samples[:,j]+=np.where(ag>hg,3,np.where(hg==ag,1,0))
+                p=model.probabilities(f.home,f.away)
+                expected[i]+=3*p[0]+p[1]
+                expected[j]+=3*p[2]+p[1]
+                actual_complete[[i,j]]=False
+        low,high=np.quantile(samples,[.1,.9],axis=0)
+        for i,team in enumerate(teams):
+            rows.append({'gameweek':week,'team':team,'expected_points':expected[i],
+                'points_low':low[i],'points_high':high[i],
+                'actual_points':actual[i] if actual_complete[i] else np.nan})
+    return pd.DataFrame(rows)
 
 class GoalModel:
     def fit(self, matches, cutoff):
