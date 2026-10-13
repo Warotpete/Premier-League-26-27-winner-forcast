@@ -66,20 +66,3 @@ python run_forecast.py --season 2627 --cutoff 2026-09-20 --backtest 2526
 Outputs go to `reports/`, with cutoff, source freshness and validation metrics
 recorded in `run_metadata.json`. The initially downloaded 2026–27 source stops
 on September 20, 2026; these results are a snapshot, not an October 11 forecast.
-
-## Free hosting
-
-Deploy this repository for free on [Streamlit Community Cloud](https://share.streamlit.io/):
-
-- Repository: `Warotpete/Premier-League-26-27-winner-forcast`
-- Branch: `main`
-- Main file: `app.py`
-- Python: `3.12` (under Advanced settings)
-- Secrets: none required
-
-The checked-in results and fixture files let the hosted app start without an API
-key or a download step. Keep model code separate from the dashboard for future
-frontend changes. Data downloads are currently manual; automatic refresh is not
-configured. Refresh data locally and push the updated files to update the hosted
-forecasts. The hosted dashboard is available at
-[football-forecast.streamlit.app](https://football-forecast.streamlit.app/).
