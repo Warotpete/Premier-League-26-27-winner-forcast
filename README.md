@@ -1,5 +1,7 @@
 # Football Forecast Lab
 
+[Open the live app](https://football-forecast.streamlit.app/)
+
 Free-first Premier League prediction and model showcase using Python and Streamlit.
 UCL is planned; no UCL probabilities are implemented yet.
 
@@ -79,4 +81,5 @@ The checked-in results and fixture files let the hosted app start without an API
 key or a download step. Keep model code separate from the dashboard for future
 frontend changes. Data downloads are currently manual; automatic refresh is not
 configured. Refresh data locally and push the updated files to update the hosted
-forecasts. A public app link will be added here after deployment is verified.
+forecasts. The hosted dashboard is available at
+[football-forecast.streamlit.app](https://football-forecast.streamlit.app/).
