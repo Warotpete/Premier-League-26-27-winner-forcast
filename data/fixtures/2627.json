@@ -1,7 +1,7 @@
 {
   "season": "2627",
   "source": "https://fantasy.premierleague.com/api/fixtures/",
-  "fetched_at": "2026-10-13T07:36:16.056024+00:00",
+  "fetched_at": "2026-10-30T08:33:32.310276+00:00",
   "events": [
     {
       "gameweek": 1,
@@ -31,17 +31,17 @@
     {
       "gameweek": 6,
       "deadline": "2026-10-10T10:00:00Z",
-      "finished": false
+      "finished": true
     },
     {
       "gameweek": 7,
       "deadline": "2026-10-17T10:00:00Z",
-      "finished": false
+      "finished": true
     },
     {
       "gameweek": 8,
       "deadline": "2026-10-23T17:30:00Z",
-      "finished": false
+      "finished": true
     },
     {
       "gameweek": 9,
@@ -65,12 +65,12 @@
     },
     {
       "gameweek": 13,
-      "deadline": "2026-12-02T18:30:00Z",
+      "deadline": "2026-12-01T18:30:00Z",
       "finished": false
     },
     {
       "gameweek": 14,
-      "deadline": "2026-12-05T13:30:00Z",
+      "deadline": "2026-12-05T11:00:00Z",
       "finished": false
     },
     {
@@ -80,7 +80,7 @@
     },
     {
       "gameweek": 16,
-      "deadline": "2026-12-19T13:30:00Z",
+      "deadline": "2026-12-19T11:00:00Z",
       "finished": false
     },
     {
